@@ -16,8 +16,11 @@ This application converts spoken descriptions into AI-generated images with auto
 - PostgreSQL database
 - DigitalOcean Spaces account
 - Replicate API key
+- Docker and Docker Compose (for containerized deployment)
 
 ## Installation
+
+### Option 1: Local Installation
 
 1. Clone the repository:
 ```bash
@@ -50,6 +53,23 @@ SPACES_BUCKET=your_bucket_name
 REPLICATE_API_TOKEN=your_replicate_api_token
 ```
 
+### Option 2: Docker Installation
+
+1. Clone the repository:
+```bash
+git clone https://github.com/hivenetes/distributed-multi-modal-agentic-ai.git
+cd distributed-multi-modal-agentic-ai
+```
+
+2. Copy `.env.example` and create a `.env` file as described above.
+
+3. Build and run the containers:
+```bash
+docker compose up --build
+```
+
+The application will be available at http://localhost:7860
+
 ## Project Structure
 
 ```
@@ -57,6 +77,8 @@ distributed-multi-modal-agentic-ai/
 ├── app.py              # Main application file
 ├── db_config.py        # Database configuration and models
 ├── requirements.txt    # Project dependencies
+├── Dockerfile         # Docker configuration
+├── docker-compose.yml # Docker Compose configuration
 ├── images/            # Local image storage
 └── README.md          # This file
 ```
