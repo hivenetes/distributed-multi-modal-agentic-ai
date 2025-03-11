@@ -53,7 +53,7 @@ REPLICATE_API_TOKEN=your_replicate_api_token
 ## Project Structure
 
 ```
-gen-img-desc/
+distributed-multi-modal-agentic-ai/
 ├── app.py              # Main application file
 ├── db_config.py        # Database configuration and models
 ├── requirements.txt    # Project dependencies
