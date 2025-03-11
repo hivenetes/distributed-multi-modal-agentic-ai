@@ -227,4 +227,9 @@ with gr.Blocks(title="Audio to Image Generator with Description") as demo:
     )
 
 if __name__ == "__main__":
-    demo.launch() 
+    demo.launch(
+        server_name="0.0.0.0",  # Critical for Docker - allows external connections
+        server_port=7860,       # Specify the port explicitly
+        share=False,            # Don't create a public URL
+        debug=True             # Show detailed errors
+    ) 
