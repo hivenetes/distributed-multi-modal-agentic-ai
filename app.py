@@ -167,7 +167,7 @@ with gr.Blocks(title="Hivenetes") as demo:
     gr.Markdown(
         """
         # Hivenetes: Distributed Multi-Modal Agentic AI Framework
-        Breaking Conversational Barries since 2025
+        Breaking Conversational Barriers since 2025
         """
     )
     
