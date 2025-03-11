@@ -1,5 +1,3 @@
-# Audio to Image Generator with Description
-
 This application converts spoken descriptions into AI-generated images with automatic captions. It uses state-of-the-art AI models for speech recognition, image generation, and image captioning, while storing the results in both a PostgreSQL database and DigitalOcean Spaces.
 
 ## Features
