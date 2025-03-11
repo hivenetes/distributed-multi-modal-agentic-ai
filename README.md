@@ -23,8 +23,8 @@ This application converts spoken descriptions into AI-generated images with auto
 
 1. Clone the repository:
 ```bash
-git clone <repository-url>
-cd gen-img-desc
+git clone https://github.com/hivenetes/distributed-multi-modal-agentic-ai.git
+cd distributed-multi-modal-agentic-ai
 ```
 
 2. Install required packages:
@@ -58,7 +58,6 @@ REPLICATE_API_TOKEN=your_replicate_api_token
 gen-img-desc/
 ├── app.py              # Main application file
 ├── db_config.py        # Database configuration and models
-├── spaces.py           # DigitalOcean Spaces utilities
 ├── requirements.txt    # Project dependencies
 ├── images/            # Local image storage
 └── README.md          # This file
