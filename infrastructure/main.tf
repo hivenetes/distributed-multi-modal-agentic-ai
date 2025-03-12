@@ -1,12 +1,12 @@
 # Create droplets in each region
 resource "digitalocean_droplet" "web" {
-  count    = length(var.regions)  # Create one droplet per region
-  name     = "web-${var.regions[count.index]}-1"
-  size     = var.droplet_size
-  image    = var.droplet_image
-  region   = var.regions[count.index]
-#   ssh_keys = [digitalocean_ssh_key.default.fingerprint] TODO
-  
+  count  = length(var.regions) # Create one droplet per region
+  name   = "web-${var.regions[count.index]}-1"
+  size   = var.droplet_size
+  image  = var.droplet_image
+  region = var.regions[count.index]
+  #   ssh_keys = [digitalocean_ssh_key.default.fingerprint] TODO
+
   user_data = <<-EOF
     #!/bin/bash
     apt-get update
@@ -21,24 +21,24 @@ resource "digitalocean_droplet" "web" {
 
 # Create regional load balancers
 resource "digitalocean_loadbalancer" "regional" {
-  count     = length(var.regions)
-  name      = "lb-regional-${var.regions[count.index]}"
-  region    = var.regions[count.index]
-  
+  count  = length(var.regions)
+  name   = "lb-regional-${var.regions[count.index]}"
+  region = var.regions[count.index]
+
   forwarding_rule {
     entry_port     = 80
     entry_protocol = "http"
-    
+
     target_port     = 80
     target_protocol = "http"
   }
-  
+
   healthcheck {
     port     = 80
     protocol = "http"
     path     = "/"
   }
-  
+
   # Select droplet in the current region
   droplet_ids = [
     digitalocean_droplet.web[count.index].id
@@ -60,8 +60,8 @@ resource "digitalocean_domain" "default" {
 # }
 
 resource "digitalocean_loadbalancer" "glb1" {
-  name   = "hb-glb-tf"
-  type   = "GLOBAL"
+  name = "hb-glb-tf"
+  type = "GLOBAL"
   domains {
     name       = digitalocean_domain.default.name
     is_managed = true
@@ -74,8 +74,8 @@ resource "digitalocean_loadbalancer" "glb1" {
     }
   }
   target_load_balancer_ids = [
-      for lb in digitalocean_loadbalancer.regional : lb.id
-    ]
+    for lb in digitalocean_loadbalancer.regional : lb.id
+  ]
 }
 
 # Add CNAME records for each region
