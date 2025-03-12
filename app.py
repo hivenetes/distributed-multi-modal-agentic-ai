@@ -163,11 +163,11 @@ def save_details(image_url, image_file_name, text_prompt, caption):
         except Exception as e:
             return f"Error in saving details: {str(e)}"
 
-with gr.Blocks(title="Audio to Image Generator with Description") as demo:
+with gr.Blocks(title="Hivenetes") as demo:
     gr.Markdown(
         """
-        # Audio to Image Generator with Description
-        Record audio to generate an image and get its description. The image will be stored in Digital Ocean Spaces.
+        # Hivenetes: Distributed Multi-Modal Agentic AI Framework
+        Breaking Conversational Barriers since 2025
         """
     )
     
@@ -227,4 +227,9 @@ with gr.Blocks(title="Audio to Image Generator with Description") as demo:
     )
 
 if __name__ == "__main__":
-    demo.launch() 
+    demo.launch(
+        server_name="0.0.0.0",  # Critical for Docker - allows external connections
+        server_port=7860,       # Specify the port explicitly
+        share=False,            # Don't create a public URL
+        debug=True             # Show detailed errors
+    ) 
