@@ -1,1 +1,8 @@
+# ===================== DO CONFIG VARS =======================
 do_token = "<add your DO API Token here>"
+# ======================= DIGITALOCEAN PostgreSQL =========================
+database_cluster_region = "ams3"
+
+# =============================== DIGITALOCEAN Spaces =================================
+spaces_access_id=""
+spaces_secret_key=""

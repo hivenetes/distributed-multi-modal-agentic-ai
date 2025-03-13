@@ -1,6 +1,6 @@
 resource "digitalocean_project" "project" {
   name        = var.project_name
-  description = "Hivenetes Global Load Balancer Project"
-  purpose     = "Web Application"
-  environment = "Production"
+  description = "Distributed Multi-Modal AI Agents"
+  purpose     = "Event-Driven Architecture"
+  environment = "Development"
 } 

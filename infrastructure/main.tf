@@ -1,6 +1,6 @@
 # Create droplets in each region
 resource "digitalocean_droplet" "web" {
-  count  = length(var.regions) # Create one droplet per region
+  count  = length(var.regions) # 1 droplet per region
   name   = "web-${var.regions[count.index]}-1"
   size   = var.droplet_size
   image  = var.droplet_image
@@ -40,13 +40,11 @@ resource "digitalocean_loadbalancer" "regional" {
   }
 
   # Select droplet in the current region
-  droplet_ids = [
-    digitalocean_droplet.web[count.index].id
-  ]
+  droplet_ids = [digitalocean_droplet.web[count.index].id]
 }
 
-# Create domain
-resource "digitalocean_domain" "default" {
+# Create domain (changed from resource to data source)
+data "digitalocean_domain" "default" {
   name = var.domain
 }
 
@@ -63,7 +61,7 @@ resource "digitalocean_loadbalancer" "glb1" {
   name = "hb-glb-tf"
   type = "GLOBAL"
   domains {
-    name       = digitalocean_domain.default.name
+    name       = data.digitalocean_domain.default.name
     is_managed = true
   }
   glb_settings {
@@ -81,7 +79,7 @@ resource "digitalocean_loadbalancer" "glb1" {
 # Add CNAME records for each region
 resource "digitalocean_record" "regional_cname" {
   count  = length(var.regions)
-  domain = digitalocean_domain.default.name
+  domain = data.digitalocean_domain.default.name
   type   = "CNAME"
   name   = var.regions[count.index]
   value  = "${var.domain}."
@@ -95,6 +93,8 @@ resource "digitalocean_project_resources" "all" {
     [for droplet in digitalocean_droplet.web : droplet.urn],
     [for lb in digitalocean_loadbalancer.regional : lb.urn],
     [digitalocean_loadbalancer.glb1.urn],
-    [digitalocean_domain.default.urn]
+    [data.digitalocean_domain.default.urn],
+    [for space in digitalocean_spaces_bucket.regional : space.urn],
+    [for db in digitalocean_database_cluster.regional : db.urn]
   )
 }
