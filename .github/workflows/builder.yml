@@ -32,5 +32,5 @@ jobs:
 
       - name: Push image to DigitalOcean Container Registry
         run: |
-          docker push ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ github.sha }}
-          docker push ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest
+          docker push --max-concurrent-uploads 1 ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ github.sha }}
+          docker push --max-concurrent-uploads 1 ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest
