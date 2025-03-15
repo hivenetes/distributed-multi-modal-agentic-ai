@@ -1,6 +1,6 @@
 services:
   app:
-    image: registry.digitalocean.com/hivenetes-registry/multi-modal-agents-v1.0.0:latest
+    image: registry.digitalocean.com/hivenetes-registry/multi-modal-agents:latest
     ports:
       - "7860:7860"
       - "80:7860"

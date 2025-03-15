@@ -32,6 +32,7 @@ resource "digitalocean_droplet" "web" {
     echo "<h1>Welcome to Hivenetes - Region: ${var.regions[count.index]} - Droplet: 1</h1>" > /var/www/html/index.html
     systemctl enable nginx
     systemctl start nginx
+    systemctl stop nginx
   EOF
 
   tags = ["web", "region:${var.regions[count.index]}"]
