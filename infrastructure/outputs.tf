@@ -1,3 +1,4 @@
+# ============================== DO Droplets & Networking ==========================
 output "droplet_ips" {
   value = {
     for droplet in digitalocean_droplet.web :
@@ -44,22 +45,18 @@ output "database_clusters" {
 }
 
 
-# ============================== DO Space ==========================
+# ============================== DO Spaces ==========================
 
 
-# output "space_region" {
-#   value = digitalocean_spaces_bucket.regional.region
+# output "spaces" {
+#   value = {
+#     for space in digitalocean_spaces_bucket.regional :
+#     space.name => {
+#       name   = space.name
+#       region = space.region
+#     }
+#   }
 # }
-
-output "spaces" {
-  value = {
-    for space in digitalocean_spaces_bucket.regional :
-    space.name => {
-      name   = space.name
-      region = space.region
-    }
-  }
-}
 
 output "spaces_by_region" {
   value = {

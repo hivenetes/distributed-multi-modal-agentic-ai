@@ -1,6 +1,6 @@
 # Create droplets in each region
 resource "digitalocean_droplet" "web" {
-  count    = length(var.regions) # 1 droplet per region
+  count    = length(var.regions) 
   name     = "web-${var.regions[count.index]}-1"
   size     = var.droplet_size
   image    = var.droplet_image
@@ -66,15 +66,6 @@ resource "digitalocean_loadbalancer" "regional" {
 data "digitalocean_domain" "default" {
   name = var.domain
 }
-
-# Create global load balancer
-# resource "digitalocean_record" "global_lb" {
-#   domain = digitalocean_domain.default.name
-#   type   = "A"
-#   name   = "@"
-#   value  = digitalocean_loadbalancer.regional[0].ip
-#   ttl    = 300
-# }
 
 resource "digitalocean_loadbalancer" "glb1" {
   name = "hb-glb-tf"

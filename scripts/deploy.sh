@@ -23,7 +23,7 @@ deploy_to_server() {
     
     # Stop all running containers first
     echo "Stopping all running containers..."
-    ssh -i "$SSH_KEY" "root@$ip" "cd /root/app && docker compose down" || true
+    ssh -i "$SSH_KEY" "root@$ip" "mkdir -p /root/app && cd /root/app && docker compose down" || true
     
     # Stop any remaining containers using port 7860
     echo "Stopping containers on port 7860..."
