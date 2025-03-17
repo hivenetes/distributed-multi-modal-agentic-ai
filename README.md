@@ -5,7 +5,7 @@ This application converts spoken descriptions into AI-generated images with auto
 - 🎤 **Speech-to-Text**: Uses OpenAI's Whisper model for accurate speech recognition
 - 🎨 **Image Generation**: Generates images from text using Flux Schnell model
 - 📝 **Image Captioning**: Automatically generates image descriptions using BLIP model
-- 🗄️ **Storage Solutions**: 
+- 🗄️ **Storage Solutions**:
   - Images stored in DigitalOcean Spaces
   - Metadata stored in PostgreSQL database
 - 🌐 **Modern UI**: Built with Gradio for a clean, user-friendly interface
@@ -16,24 +16,24 @@ This application converts spoken descriptions into AI-generated images with auto
 - PostgreSQL database
 - DigitalOcean Spaces account
 - Replicate API key
-- Docker and Docker Compose (for containerized deployment)
 
 ## Installation
 
-### Option 1: Local Installation
-
 1. Clone the repository:
+
 ```bash
 git clone https://github.com/hivenetes/distributed-multi-modal-agentic-ai.git
 cd distributed-multi-modal-agentic-ai
 ```
 
 2. Install required packages:
+
 ```bash
 pip install -r requirements.txt
 ```
 
 3. Copy `.env.example` and create a `.env` file in the project root with the following variables:
+
 ```env
 # Database Configuration
 DB_USER=your_db_user
@@ -53,23 +53,6 @@ SPACES_BUCKET=your_bucket_name
 REPLICATE_API_TOKEN=your_replicate_api_token
 ```
 
-### Option 2: Docker Installation
-
-1. Clone the repository:
-```bash
-git clone https://github.com/hivenetes/distributed-multi-modal-agentic-ai.git
-cd distributed-multi-modal-agentic-ai
-```
-
-2. Copy `.env.example` and create a `.env` file as described above.
-
-3. Build and run the containers:
-```bash
-docker compose up --build
-```
-
-The application will be available at http://localhost:7860
-
 ## Project Structure
 
 ```
@@ -79,17 +62,19 @@ distributed-multi-modal-agentic-ai/
 ├── requirements.txt    # Project dependencies
 ├── Dockerfile         # Docker configuration
 ├── docker-compose.yml # Docker Compose configuration
+├── images/            # Local image storage
 └── README.md          # This file
 ```
 
 ## Usage
 
 1. Start the application:
+
 ```bash
 python app.py
 ```
 
-2. Open your web browser and navigate to the provided URL (typically http://localhost:7860)
+2. Open your web browser and navigate to the provided URL (typically <http://localhost:7860>)
 
 3. Use the interface to:
    - Record audio describing the image you want to generate
@@ -110,6 +95,7 @@ python app.py
 ## Database Schema
 
 The `image_records` table stores:
+
 - `id`: Primary key
 - `prompt`: Original text prompt
 - `image_filename`: Name of the stored image file
@@ -119,6 +105,7 @@ The `image_records` table stores:
 ## Error Handling
 
 The application includes comprehensive error handling for:
+
 - Audio recording/transcription issues
 - Image generation failures
 - Database connection problems
@@ -130,4 +117,4 @@ Contributions are welcome! Please feel free to submit a Pull Request.
 
 ## License
 
-[MIT License](LICENSE) 
+[MIT License](LICENSE)
