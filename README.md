@@ -79,7 +79,6 @@ distributed-multi-modal-agentic-ai/
 ├── requirements.txt    # Project dependencies
 ├── Dockerfile         # Docker configuration
 ├── docker-compose.yml # Docker Compose configuration
-├── images/            # Local image storage
 └── README.md          # This file
 ```
 
