@@ -7,7 +7,7 @@ variable "do_token" {
 variable "project_name" {
   description = "DigitalOcean Project Name"
   type        = string
-  default     = "Meridian"
+  default     = "meridian"
 }
 
 variable "domain" {
@@ -25,7 +25,7 @@ variable "regions" {
 variable "droplet_size" {
   description = "Size of the droplets"
   type        = string
-  default     = "s-1vcpu-1gb"
+  default     = "c2-8vcpu-16gb" # CPU-Optimized 2x SSD
 }
 
 variable "droplet_image" {

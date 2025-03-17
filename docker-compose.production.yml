@@ -1,0 +1,22 @@
+services:
+  app:
+    image: registry.digitalocean.com/hivenetes-registry/multi-modal-agents:latest
+    ports:
+      - "7860:7860"
+      - "80:7860"
+    volumes:
+      - ./images:/app/images
+    env_file:
+      - .env
+    restart: unless-stopped
+    networks:
+      - app-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:7860/"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+networks:
+  app-network:
+    driver: bridge 

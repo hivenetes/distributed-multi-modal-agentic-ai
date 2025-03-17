@@ -1,3 +1,4 @@
+# ============================== DO Droplets & Networking ==========================
 output "droplet_ips" {
   value = {
     for droplet in digitalocean_droplet.web :
@@ -20,60 +21,42 @@ output "domain" {
 # ============================== DO Relational Database ==========================
 
 output "database_clusters" {
-  value = {
-    for idx, cluster in digitalocean_database_cluster.regional : var.regions[idx] => {
-      id       = cluster.id
-      host     = cluster.host
-      port     = cluster.port
+  value = merge(
+    { (var.regions[0]) = {
+      id       = digitalocean_database_cluster.primary.id
+      host     = digitalocean_database_cluster.primary.host
+      port     = digitalocean_database_cluster.primary.port
       user     = "doadmin"
-      password = cluster.password
-      region   = cluster.region
-      name     = cluster.name
-    }
-  }
+      password = digitalocean_database_cluster.primary.password
+      region   = digitalocean_database_cluster.primary.region
+      name     = digitalocean_database_cluster.primary.name
+    } },
+    { for idx, replica in digitalocean_database_replica.cross_region : var.regions[idx + 1] => {
+      id       = replica.id
+      host     = replica.host
+      port     = replica.port
+      user     = "doadmin"
+      password = digitalocean_database_cluster.primary.password
+      region   = replica.region
+      name     = replica.name
+    } }
+  )
   sensitive = true
 }
 
-# output "database_cluster_id" {
-#   value = digitalocean_database_cluster.hive-db.id
+
+# ============================== DO Spaces ==========================
+
+
+# output "spaces" {
+#   value = {
+#     for space in digitalocean_spaces_bucket.regional :
+#     space.name => {
+#       name   = space.name
+#       region = space.region
+#     }
+#   }
 # }
-
-# output "database_cluster_host" {
-#   value = digitalocean_database_cluster.hive-db.host
-# }
-
-# output "database_cluster_user" {
-#   value = "doadmin"
-# }
-
-# output "database_cluster_password" {
-#   value     = digitalocean_database_cluster.hive-db.password
-#   sensitive = true
-# }
-
-# output "database_cluster_port" {
-#   value = digitalocean_database_cluster.hive-db.port
-# }
-
-# ============================== DO Space ==========================
-
-# output "space_name" {
-#   value = digitalocean_spaces_bucket.regional.name
-# }
-
-# output "space_region" {
-#   value = digitalocean_spaces_bucket.regional.region
-# }
-
-output "spaces" {
-  value = {
-    for space in digitalocean_spaces_bucket.regional :
-    space.name => {
-      name   = space.name
-      region = space.region
-    }
-  }
-}
 
 output "spaces_by_region" {
   value = {
