@@ -60,7 +60,8 @@ distributed-multi-modal-agentic-ai/
 ├── app.py              # Main application file
 ├── db_config.py        # Database configuration and models
 ├── requirements.txt    # Project dependencies
-├── images/            # Local image storage
+├── Dockerfile         # Docker configuration
+├── docker-compose.yml # Docker Compose configuration
 └── README.md          # This file
 ```
 

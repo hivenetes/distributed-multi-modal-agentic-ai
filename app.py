@@ -73,32 +73,17 @@ def generate_image_caption(text_prompt, replicate_image_url):
         gr.Warning('No text prompt or image URL provided. Please record audio and try again.')
     else:
         try:
-            # Create images directory if it doesn't exist
-            if not os.path.exists('images'):
-                os.makedirs('images')
-                
-            # Download the image from URL
-            response = requests.get(replicate_image_url)
-            if response.status_code != 200:
-                raise Exception(f"Failed to download image: HTTP {response.status_code}")
-            
-            # Open the image from bytes
-            image = Image.open(BytesIO(response.content))
             image_file_name = text_prompt.strip().replace(" ", "_").replace(".", "")
             image_file_name = image_file_name + ".jpg"
-            image.save(f"images/{image_file_name}")
-            
-            # Convert to RGB if necessary
-            if image.mode != "RGB":
-                image = image.convert("RGB")
-            
-            processor = BlipProcessor.from_pretrained("Salesforce/blip-image-captioning-base")
-            model = BlipForConditionalGeneration.from_pretrained("Salesforce/blip-image-captioning-base")
-            
-            # Generate caption
-            inputs = processor(image, return_tensors="pt")
-            out = model.generate(**inputs)
-            caption = processor.decode(out[0], skip_special_tokens=True)
+
+            output = replicate.run(
+                "salesforce/blip:2e1dddc8621f72155f24cf2e0adbde548458d3cab9f00c0139eea840d0ac4746",
+                input={
+                    "task": "image_captioning",
+                    "image": replicate_image_url
+                }
+            )
+            caption = output.replace("Caption:", "").strip()
             return caption, image_file_name
         except Exception as e:
             return f"Error in caption generation: {str(e)}", ""
