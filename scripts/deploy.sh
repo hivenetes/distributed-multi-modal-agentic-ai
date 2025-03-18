@@ -21,13 +21,18 @@ deploy_to_server() {
     
     echo "Deploying to $server_name ($ip)..."
     
+    # Clean up Docker system first - safely check if containers exist before stopping
+    echo "Cleaning up Docker system..."
+    ssh -i "$SSH_KEY" "root@$ip" "docker stop \$(docker ps -a -q) && docker rm \$(docker ps -a -q) && docker rmi \$(docker images -q) -f" || true
+
+    
     # Stop all running containers first
     echo "Stopping all running containers..."
     ssh -i "$SSH_KEY" "root@$ip" "mkdir -p /root/app && cd /root/app && docker compose down" || true
     
-    # Stop any remaining containers using port 7860
+    # Stop any remaining containers using port 7860 - safely check if containers exist
     echo "Stopping containers on port 7860..."
-    ssh -i "$SSH_KEY" "root@$ip" "docker ps -q --filter publish=7860 | xargs -r docker stop"
+    ssh -i "$SSH_KEY" "root@$ip" "containers=\$(docker ps -q --filter publish=7860); if [ -n \"\$containers\" ]; then docker stop \$containers; fi" || true
     
     # Create app directory if it doesn't exist
     ssh -i "$SSH_KEY" "root@$ip" "mkdir -p /root/app"
