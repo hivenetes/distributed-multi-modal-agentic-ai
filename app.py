@@ -229,7 +229,7 @@ with gr.Blocks(title="Hivenetes") as demo:
 
 if __name__ == "__main__":
     demo.launch(
-        server_name="127.0.0.1",  # Critical for Docker - allows external connections
+        server_name="0.0.0.0",  # Critical for Docker - allows external connections
         server_port=7860,       # Specify the port explicitly
         share=False,            # Don't create a public URL
         debug=True             # Show detailed errors
