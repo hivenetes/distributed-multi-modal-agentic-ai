@@ -1,47 +1,59 @@
 import gradio as gr
 from dotenv import load_dotenv
 import os
-import torch
-import numpy as np
-from transformers import pipeline
 import replicate
-from transformers import BlipProcessor, BlipForConditionalGeneration
-from PIL import Image
 import requests
-from io import BytesIO
 import os
 import boto3
 from db_config import SessionLocal, ImageRecord
+import soundfile as sf
+import tempfile
+from openai import OpenAI
 
 load_dotenv()
 
-# Get the API token from the environment variable
-api_token = os.getenv("REPLICATE_API_TOKEN")
-device = "cuda:0" if torch.cuda.is_available() else "cpu"
-torch_dtype = torch.float16 if torch.cuda.is_available() else torch.float32
-device_idx = 0 if torch.cuda.is_available() else -1
-
-transcriber = pipeline("automatic-speech-recognition", model="openai/whisper-large-v3-turbo")
-
-def transcribe(audio):    
+def save_audio(audio):
     if audio is None:
         gr.Warning('No audio provided. Please record audio and try again.')
-    else:
-        try:
+        return None
+    
+    try:        
+        # Create a temporary file to store the audio
+        with tempfile.NamedTemporaryFile(delete=False, suffix='.wav') as temp_file:
+            temp_path = temp_file.name
             sr, y = audio
             
             # Convert to mono if stereo
             if y.ndim > 1:
                 y = y.mean(axis=1)
-                
-            y = y.astype(np.float32)
-            y /= np.max(np.abs(y))
+            
+            # Save the audio to temporary file
+            sf.write(temp_path, y, sr)
+            
+            transcribed_text = transcribe(temp_path)
+            return temp_path, transcribed_text
+            
+    except Exception as e:
+        gr.Warning(f'Error saving audio: {str(e)}')
+        return "None", "None"
 
-            # Force English language and transcription task
-            transcript = transcriber({"sampling_rate": sr, "raw": y})["text"]  
-            return transcript
+def transcribe(audio_file_path):    
+    if audio_file_path is None:
+        gr.Warning('No audio provided. Please record audio and try again.')
+    else:
+        try:
+            client = OpenAI()
+
+            audio_file= open(audio_file_path, "rb")
+            transcription = client.audio.transcriptions.create(
+                model="whisper-1", 
+                file=audio_file
+            )
+
+            return transcription.text
         except Exception as e:
             gr.Warning(f'Error in transcription: {str(e)}')
+            print(f'Error in transcription: {str(e)}')
             return ""
 
 def generate_image(text_prompt):
@@ -64,7 +76,16 @@ def generate_image(text_prompt):
                 }
             )
 
-            return str(output[0]), str(output[0])
+            replicate_image_url = str(output[0])
+
+            # Generate image caption
+            caption, image_file_name = generate_image_caption(text_prompt, replicate_image_url)
+
+            #save details
+            save_details(replicate_image_url, image_file_name, text_prompt, caption)
+
+            return replicate_image_url, caption, replicate_image_url
+
         except Exception as e:
             return f"Error in image generation: {str(e)}", ""
 
@@ -89,10 +110,6 @@ def generate_image_caption(text_prompt, replicate_image_url):
             return f"Error in caption generation: {str(e)}", ""
 
 def store_image_in_spaces(image_url, image_file_name):
-    
-    print(image_url)
-    print(image_file_name)
-    
     if image_url is None or image_file_name is None:
         gr.Warning('No image URL or image file name provided. Please generate image and try again.')
     else:   
@@ -103,8 +120,23 @@ def store_image_in_spaces(image_url, image_file_name):
                         endpoint_url=os.getenv('SPACES_ENDPOINT'),
                         aws_access_key_id=os.getenv('SPACES_KEY'),
                         aws_secret_access_key=os.getenv('SPACES_SECRET'))
-            response = client.upload_file(image_url, os.getenv('SPACES_BUCKET'), image_file_name)
-            return response
+            
+            # Download the image
+            response = requests.get(image_url)
+            response.raise_for_status()  # Raise an error for bad responses
+
+            # Save the image to a temporary file
+            with tempfile.NamedTemporaryFile(delete=False, suffix='.jpg') as temp_file:
+                temp_file.write(response.content)
+                temp_path = temp_file.name
+
+            # Upload the temporary file to Spaces
+            client.upload_file(temp_path, os.getenv('SPACES_BUCKET'), image_file_name)
+
+            # Clean up the temporary file
+            os.unlink(temp_path)
+
+            return "Image stored successfully in Spaces"
         except Exception as e:
             return f"Error in storing image in spaces: {str(e)}"
 
@@ -159,7 +191,7 @@ with gr.Blocks(title="Hivenetes") as demo:
     with gr.Row():
         with gr.Column(scale=1):
             audio_input = gr.Microphone(label="Record Audio")
-            submit_btn = gr.Button("Submit", variant="primary")
+            audio_file_path = gr.Textbox(label="Audio File Name", lines=1, visible=False)
         
         with gr.Column(scale=2):
             with gr.Group():
@@ -172,48 +204,32 @@ with gr.Blocks(title="Hivenetes") as demo:
     with gr.Row():
         with gr.Column(scale=1):
             generate_image_btn = gr.Button("Generate Image", variant="primary")
+                
+    with gr.Row():
         with gr.Column(scale=2):
             image_output = gr.Image(label="Generated Image", type="filepath")
-            
-    with gr.Row():
-        with gr.Column(scale=1):
-            generate_caption_btn = gr.Button("Generate Caption", variant="primary")
+
+    with gr.Row():    
         with gr.Column(scale=2):
             caption_output = gr.Textbox(label="Image Caption", lines=2)
             invisible_image_file_name = gr.Textbox(label="Invisible Text", lines=1, visible=False)
     
-    with gr.Row():
-        with gr.Column(scale=2):
-            store_image_btn = gr.Button("Save Image and Caption", variant="primary")
 
-    # Connect the components
-    submit_btn.click(
-        fn=transcribe,
+    audio_input.change(
+        fn=save_audio,
         inputs=[audio_input],
-        outputs=[transcribed_text]
+        outputs=[audio_file_path, transcribed_text]
     )
 
     generate_image_btn.click(
         fn=generate_image,
         inputs=[transcribed_text],
-        outputs=[image_output, invisible_replicate_image_url]
-    )
-
-    generate_caption_btn.click(
-        fn=generate_image_caption,
-        inputs=[transcribed_text, invisible_replicate_image_url],
-        outputs=[caption_output, invisible_image_file_name]
-    )
-
-    store_image_btn.click(
-        fn=save_details,
-        inputs=[image_output, invisible_image_file_name, transcribed_text, caption_output],
-        outputs=[store_image_btn]
+        outputs=[image_output, caption_output, invisible_replicate_image_url]
     )
 
 if __name__ == "__main__":
     demo.launch(
-        server_name="0.0.0.0",  # Critical for Docker - allows external connections
+        server_name="127.0.0.1",  # Critical for Docker - allows external connections
         server_port=7860,       # Specify the port explicitly
         share=False,            # Don't create a public URL
         debug=True             # Show detailed errors
