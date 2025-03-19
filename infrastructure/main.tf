@@ -43,6 +43,7 @@ resource "digitalocean_loadbalancer" "regional" {
   count  = length(var.regions)
   name   = "lb-regional-${var.regions[count.index]}"
   region = var.regions[count.index]
+  network = "INTERNAL"
 
   forwarding_rule {
     entry_port     = 80
