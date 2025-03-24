@@ -71,10 +71,10 @@ def transcribe(audio_file_path):
             print(f'Error in transcription: {str(e)}')
             return ""
 
-def generate_image(text_prompt):
-    
-    if text_prompt is None:
+def generate_image(text_prompt):    
+    if text_prompt is None or text_prompt.strip() == "":
         gr.Warning('No text prompt provided. Please record audio and try again.')
+        return None, None, None
     else:
         try:
             output = replicate.run(
@@ -102,7 +102,8 @@ def generate_image(text_prompt):
             return replicate_image_url, caption, replicate_image_url
 
         except Exception as e:
-            return f"Error in image generation: {str(e)}", ""
+            print(f"Error in image generation: {str(e)}")  # Debug print
+            return None, None, None
 
 def generate_image_caption(text_prompt, replicate_image_url):    
     if text_prompt is None or replicate_image_url is None:
