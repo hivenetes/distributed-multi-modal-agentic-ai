@@ -3,14 +3,29 @@ from dotenv import load_dotenv
 import os
 import replicate
 import requests
-import os
+import os 
 import boto3
 from db_config import SessionLocal, ImageRecord
 import soundfile as sf
 import tempfile
 from openai import OpenAI
+from fastapi import FastAPI
+from fastapi.responses import FileResponse
+import pathlib
 
 load_dotenv()
+
+# Create FastAPI app
+app = FastAPI()
+
+# Create the architecture diagram route
+@app.get("/arch")
+async def get_architecture():
+    arch_path = "assets/architecture.png"  # Use existing file directly
+    if os.path.exists(arch_path):
+        return FileResponse(arch_path)
+    else:
+        return {"error": "Architecture diagram not found"}
 
 def save_audio(audio):
     if audio is None:
@@ -180,7 +195,30 @@ def save_details(image_url, image_file_name, text_prompt, caption):
         except Exception as e:
             return f"Error in saving details: {str(e)}"
 
-with gr.Blocks(title="Hivenetes") as demo:
+with gr.Blocks(
+    title="Hivenetes",
+    analytics_enabled=False,
+    css="""
+        .gradio-container {max-width: 100% !important} 
+        .footer {display: none !important} 
+        footer {display: none !important}
+        #custom-footer {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            text-align: center;
+            padding: 20px;
+            background-color: black;
+        }
+        .primary-btn {
+            background-color: #2196F3 !important;
+        }
+        button.primary-btn:hover {
+            background-color: #1976D2 !important;
+        }
+    """
+) as demo:
     gr.Markdown(
         """
         # Hivenetes: Distributed Multi-Modal Agentic AI Framework
@@ -203,7 +241,7 @@ with gr.Blocks(title="Hivenetes") as demo:
 
     with gr.Row():
         with gr.Column(scale=1):
-            generate_image_btn = gr.Button("Generate Image", variant="primary")
+            generate_image_btn = gr.Button("Generate Image", elem_classes="primary-btn")
                 
     with gr.Row():
         with gr.Column(scale=2):
@@ -214,6 +252,14 @@ with gr.Blocks(title="Hivenetes") as demo:
             caption_output = gr.Textbox(label="Image Caption", lines=2)
             invisible_image_file_name = gr.Textbox(label="Invisible Text", lines=1, visible=False)
     
+    # Add footer with an id
+    gr.Markdown(
+        """
+        <div id="custom-footer">
+            Built with ❤️ by Abhi (dabhey.com) & Narsi
+        </div>
+        """
+    )
 
     audio_input.change(
         fn=save_audio,
@@ -228,9 +274,9 @@ with gr.Blocks(title="Hivenetes") as demo:
     )
 
 if __name__ == "__main__":
-    demo.launch(
-        server_name="0.0.0.0",  # Critical for Docker - allows external connections
-        server_port=7860,       # Specify the port explicitly
-        share=False,            # Don't create a public URL
-        debug=True             # Show detailed errors
-    ) 
+    # Mount Gradio app to FastAPI
+    app = gr.mount_gradio_app(app, demo, path="/")
+    
+    # Run the FastAPI app
+    import uvicorn
+    uvicorn.run(app, host="0.0.0.0", port=7860) 
