@@ -58,15 +58,15 @@ output "database_clusters" {
 #   }
 # }
 
-output "spaces_by_region" {
-  value = {
-    for idx, space in digitalocean_spaces_bucket.regional : var.regions[idx] => {
-      name     = space.name
-      region   = space.region
-      endpoint = "https://${space.name}.${space.region}.digitaloceanspaces.com"
-    }
-  }
-}
+# output "spaces_by_region" {
+#   value = {
+#     for idx, space in digitalocean_spaces_bucket.regional : var.regions[idx] => {
+#       name     = space.name
+#       region   = space.region
+#       endpoint = "https://${space.name}.${space.region}.digitaloceanspaces.com"
+#     }
+#   }
+# }
 
 # VPC Outputs
 output "vpcs" {

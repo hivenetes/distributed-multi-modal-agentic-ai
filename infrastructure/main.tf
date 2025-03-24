@@ -105,7 +105,7 @@ resource "digitalocean_project_resources" "all" {
     [for lb in digitalocean_loadbalancer.regional : lb.urn],
     [digitalocean_loadbalancer.glb1.urn],
     [data.digitalocean_domain.default.urn],
-    [for space in digitalocean_spaces_bucket.regional : space.urn],
+    # [for space in digitalocean_spaces_bucket.regional : space.urn],
     [digitalocean_database_cluster.primary.urn]
   )
 }

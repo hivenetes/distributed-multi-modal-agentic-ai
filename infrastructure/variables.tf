@@ -68,32 +68,32 @@ variable "database_cluster_node_count" {
 }
 
 # ===================== DigitalOcean Space CONFIG VARS =======================
-variable "spaces_access_id" {
-  type        = string
-  default     = ""
-  description = "DigitalOcean Spaces Access Key"
-}
+# variable "spaces_access_id" {
+#   type        = string
+#   default     = ""
+#   description = "DigitalOcean Spaces Access Key"
+# }
 
-variable "spaces_secret_key" {
-  type        = string
-  default     = ""
-  description = "DigitalOcean Spaces Secret Key"
-}
+# variable "spaces_secret_key" {
+#   type        = string
+#   default     = ""
+#   description = "DigitalOcean Spaces Secret Key"
+# }
 
-variable "space_region" {
-  type        = string
-  default     = "ams3"
-  description = "DigitalOcean Space region"
-}
+# variable "space_region" {
+#   type        = string
+#   default     = "ams3"
+#   description = "DigitalOcean Space region"
+# }
 
-variable "space_name_prefix" {
-  type        = string
-  default     = "hb-space"
-  description = "Prefix for space names"
-}
+# variable "space_name_prefix" {
+#   type        = string
+#   default     = "hb-space"
+#   description = "Prefix for space names"
+# }
 
-variable "space_regions" {
-  type        = list(string)
-  default     = ["ams3", "lon1", "nyc1"]
-  description = "Regions for spaces deployment"
-}
+# variable "space_regions" {
+#   type        = list(string)
+#   default     = ["ams3", "lon1", "nyc1"]
+#   description = "Regions for spaces deployment"
+# }

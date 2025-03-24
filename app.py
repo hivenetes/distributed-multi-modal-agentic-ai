@@ -257,7 +257,7 @@ with gr.Blocks(
     gr.Markdown(
         """
         <div id="custom-footer">
-            Built with ❤️ by Abhi (dabhey.com) & Narsi
+            Built with ❤️ by Abhi (diabhey.com) & Narsi (@bnarasimha21)
         </div>
         """
     )
