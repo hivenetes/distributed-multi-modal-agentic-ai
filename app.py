@@ -211,6 +211,12 @@ with gr.Blocks(
             padding: 20px;
             background-color: black;
         }
+        .primary-btn {
+            background-color: #2196F3 !important;
+        }
+        button.primary-btn:hover {
+            background-color: #1976D2 !important;
+        }
     """
 ) as demo:
     gr.Markdown(
@@ -235,7 +241,7 @@ with gr.Blocks(
 
     with gr.Row():
         with gr.Column(scale=1):
-            generate_image_btn = gr.Button("Generate Image", variant="primary")
+            generate_image_btn = gr.Button("Generate Image", elem_classes="primary-btn")
                 
     with gr.Row():
         with gr.Column(scale=2):
@@ -250,7 +256,7 @@ with gr.Blocks(
     gr.Markdown(
         """
         <div id="custom-footer">
-            Built with ❤️ by Abhi & Narsi
+            Built with ❤️ by Abhi (dabhey.com) & Narsi
         </div>
         """
     )
