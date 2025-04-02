@@ -12,6 +12,7 @@ from openai import OpenAI
 from fastapi import FastAPI
 from fastapi.responses import FileResponse
 import pathlib
+from openai import OpenAI
 
 load_dotenv()
 
@@ -74,56 +75,55 @@ def transcribe(audio_file_path):
 def generate_image(text_prompt):    
     if text_prompt is None or text_prompt.strip() == "":
         gr.Warning('No text prompt provided. Please record audio and try again.')
-        return None, None, None
+        return None, None
     else:
         try:
-            output = replicate.run(
-                "black-forest-labs/flux-schnell",
-                input={
-                    "prompt": text_prompt,
-                    "go_fast": True,
-                    "megapixels": "1",
-                    "num_outputs": 1,
-                    "aspect_ratio": "1:1",
-                    "output_format": "webp",
-                    "output_quality": 80,
-                    "num_inference_steps": 4
-                }
+            client = OpenAI()
+            response = client.images.generate(
+                model="dall-e-2",
+                prompt=text_prompt,
+                size="1024x1024",
+                n=1,
             )
 
-            replicate_image_url = str(output[0])
+            replicate_image_url = str(response.data[0].url)
 
-            # Generate image caption
-            caption, image_file_name = generate_image_caption(text_prompt, replicate_image_url)
-
-            #save details
-            save_details(replicate_image_url, image_file_name, text_prompt, caption)
-
-            return replicate_image_url, caption, replicate_image_url
+            return replicate_image_url, replicate_image_url
 
         except Exception as e:
             print(f"Error in image generation: {str(e)}")  # Debug print
-            return None, None, None
+            return None, None
 
 def generate_image_caption(text_prompt, replicate_image_url):    
-    if text_prompt is None or replicate_image_url is None:
+    if text_prompt is None or text_prompt.strip() == "" or replicate_image_url is None:
         gr.Warning('No text prompt or image URL provided. Please record audio and try again.')
+        return None, None
     else:
         try:
             image_file_name = text_prompt.strip().replace(" ", "_").replace(".", "")
             image_file_name = image_file_name + ".jpg"
 
-            output = replicate.run(
-                "salesforce/blip:2e1dddc8621f72155f24cf2e0adbde548458d3cab9f00c0139eea840d0ac4746",
-                input={
-                    "task": "image_captioning",
-                    "image": replicate_image_url
-                }
+            client = OpenAI()
+            response = client.chat.completions.create(
+            model="gpt-4o-mini",
+            messages=[{
+                "role": "user",
+                "content": [
+                    {"type": "text", "text": "What's in this image?"},
+                    {
+                        "type": "image_url",
+                        "image_url": {
+                                "url": replicate_image_url,
+                            },
+                        },
+                    ],
+                }],
             )
-            caption = output.replace("Caption:", "").strip()
+            caption = response.choices[0].message.content.strip()
             return caption, image_file_name
         except Exception as e:
-            return f"Error in caption generation: {str(e)}", ""
+            print(f"Error in caption generation: {str(e)}")
+            return None, None
 
 def store_image_in_spaces(image_url, image_file_name):
     if image_url is None or image_file_name is None:
@@ -186,16 +186,17 @@ def store_image_record_in_database(text_prompt, image_filename, description):
         return f"Error in database operation: {str(e)}"
     
 def save_details(image_url, image_file_name, text_prompt, caption):
-    if image_url is None or image_file_name is None or text_prompt is None or caption is None:
+    if image_url is None or image_file_name is None or text_prompt is None or text_prompt.strip() == "" or caption is None or caption.strip() == "":
         gr.Warning('Please generate image and try again.')
+        return None
     else:
         try:
             store_image_in_spaces(image_url, image_file_name)
             store_image_record_in_database(text_prompt, image_file_name, caption)
             return "Details saved successfully"
         except Exception as e:
-            return f"Error in saving details: {str(e)}"
-
+            print(f"Error in saving details: {str(e)}")
+            return None
 with gr.Blocks(
     title="Hivenetes",
     analytics_enabled=False,
@@ -209,7 +210,7 @@ with gr.Blocks(
             left: 0;
             right: 0;
             text-align: center;
-            padding: 20px;
+            padding: 5px;
             background-color: black;
         }
         .primary-btn {
@@ -243,16 +244,20 @@ with gr.Blocks(
     with gr.Row():
         with gr.Column(scale=1):
             generate_image_btn = gr.Button("Generate Image", elem_classes="primary-btn")
-                
-    with gr.Row():
         with gr.Column(scale=2):
-            image_output = gr.Image(label="Generated Image", type="filepath")
+            image_output = gr.Image(label="Generated Image", type="filepath", height=512, width=768)        
 
-    with gr.Row():    
+    with gr.Row():
+        with gr.Column(scale=1):
+            generate_caption_btn = gr.Button("Generate Caption", elem_classes="primary-btn")
         with gr.Column(scale=2):
             caption_output = gr.Textbox(label="Image Caption", lines=2)
             invisible_image_file_name = gr.Textbox(label="Invisible Text", lines=1, visible=False)
     
+    with gr.Row():
+        with gr.Column(scale=1):
+            save_image_btn = gr.Button("Save Details", elem_classes="primary-btn")
+
     # Add footer with an id
     gr.Markdown(
         """
@@ -271,7 +276,19 @@ with gr.Blocks(
     generate_image_btn.click(
         fn=generate_image,
         inputs=[transcribed_text],
-        outputs=[image_output, caption_output, invisible_replicate_image_url]
+        outputs=[image_output, invisible_replicate_image_url]
+    )
+
+    generate_caption_btn.click(
+        fn=generate_image_caption,
+        inputs=[transcribed_text, invisible_replicate_image_url],
+        outputs=[caption_output, invisible_image_file_name]
+    )
+
+    save_image_btn.click(
+        fn=save_details,
+        inputs=[invisible_replicate_image_url, invisible_image_file_name, transcribed_text, caption_output],
+        outputs=[save_image_btn]
     )
 
 if __name__ == "__main__":
