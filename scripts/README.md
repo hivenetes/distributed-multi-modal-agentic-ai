@@ -6,14 +6,20 @@ This directory contains automation scripts for deployment and data synchronizati
 
 ### `sync_spaces.sh`
 
-This script provides continuous synchronization between DigitalOcean Spaces (object storage) across different regions. It ensures that data is replicated from Amsterdam (AMS3) to London (LON1) and New York (NYC3) regions at regular intervals.
+This script provides continuous synchronization between DigitalOcean Spaces (object storage) across different regions. It automatically discovers and syncs all configured spaces, using Amsterdam (AMS3) as the source region.
 
 **Key Features:**
 
+- Dynamic discovery of configured spaces from rclone.conf
 - Continuous synchronization with configurable intervals (default: 5 minutes)
 - Automatic bucket creation if not exists
 - Detailed logging of sync operations
 - Graceful termination handling
+
+**Requirements:**
+
+- At least two spaces must be configured in rclone.conf
+- One space must be in the Amsterdam (AMS3) region to act as the source
 
 ### `deploy.sh`
 
@@ -52,34 +58,38 @@ This script handles automated deployment of the application to multiple DigitalO
    - Set provider as "DigitalOcean Spaces"
    - Enter your Spaces access key and secret key
    - Set endpoint based on region:
-     - Amsterdam: `ams3.digitaloceanspaces.com`
-     - London: `lon1.digitaloceanspaces.com`
-     - New York: `nyc3.digitaloceanspaces.com`
+     - Amsterdam: `ams3.digitaloceanspaces.com` (required as source)
+     - London: `lon1.digitaloceanspaces.com` (optional)
+     - New York: `nyc3.digitaloceanspaces.com` (optional)
+   - You can add additional regions as needed
 
 Example rclone config structure:
 
 ```conf
-[meridian-spaces-amsterdam]
+[your-space-amsterdam]
 type = s3
 provider = DigitalOcean
 access_key_id = your_access_key
 secret_access_key = your_secret_key
 endpoint = ams3.digitaloceanspaces.com
 
-[meridian-spaces-london]
+[your-space-london]
 type = s3
 provider = DigitalOcean
 access_key_id = your_access_key
 secret_access_key = your_secret_key
 endpoint = lon1.digitaloceanspaces.com
 
-[meridian-spaces-newyork]
+# You can add more spaces in any region
+[your-space-singapore]
 type = s3
 provider = DigitalOcean
 access_key_id = your_access_key
 secret_access_key = your_secret_key
-endpoint = nyc3.digitaloceanspaces.com
+endpoint = sgp1.digitaloceanspaces.com
 ```
+
+Note: The remote names in the config can be anything you choose, as long as one space is configured with the Amsterdam endpoint.
 
 ### 2. Deployment Prerequisites
 
