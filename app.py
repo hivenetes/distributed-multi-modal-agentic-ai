@@ -137,20 +137,7 @@ def store_image_in_spaces(image_url, image_file_name):
                         aws_access_key_id=os.getenv('SPACES_KEY'),
                         aws_secret_access_key=os.getenv('SPACES_SECRET'))
             
-            # Download the image
-            response = requests.get(image_url)
-            response.raise_for_status()  # Raise an error for bad responses
-
-            # Save the image to a temporary file
-            with tempfile.NamedTemporaryFile(delete=False, suffix='.jpg') as temp_file:
-                temp_file.write(response.content)
-                temp_path = temp_file.name
-
-            # Upload the temporary file to Spaces
-            client.upload_file(temp_path, os.getenv('SPACES_BUCKET'), image_file_name)
-
-            # Clean up the temporary file
-            os.unlink(temp_path)
+            client.upload_file(image_url, os.getenv('SPACES_BUCKET'), image_file_name)
 
             return "Image stored successfully in Spaces"
         except Exception as e:
@@ -287,7 +274,7 @@ with gr.Blocks(
 
     save_image_btn.click(
         fn=save_details,
-        inputs=[invisible_replicate_image_url, invisible_image_file_name, transcribed_text, caption_output],
+        inputs=[image_output, invisible_image_file_name, transcribed_text, caption_output],
         outputs=[save_image_btn]
     )
 
@@ -297,4 +284,4 @@ if __name__ == "__main__":
     
     # Run the FastAPI app
     import uvicorn
-    uvicorn.run(app, host="0.0.0.0", port=7860) 
+    uvicorn.run(app, host="127.0.0.1", port=7860) 
