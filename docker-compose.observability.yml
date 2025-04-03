@@ -20,7 +20,7 @@ services:
       retries: 3
     environment:
       - OTEL_EXPORTER_OTLP_ENDPOINT=${OTEL_EXPORTER_OTLP_ENDPOINT}
-      - OTEL_RESOURCE_ATTRIBUTES=service.name=devoxx
+      - OTEL_RESOURCE_ATTRIBUTES=service.name=meridian
       - OTEL_METRICS_EXPORTER=otlp
       - OTEL_TRACES_EXPORTER=otlp
 

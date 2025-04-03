@@ -13,8 +13,12 @@ from fastapi import FastAPI
 from fastapi.responses import FileResponse
 import pathlib
 from openai import OpenAI
+from opentelemetry import trace
 
 load_dotenv()
+
+# Acquire a tracer
+tracer = trace.get_tracer("combined.tracer")
 
 # Create FastAPI app
 app = FastAPI()
@@ -29,161 +33,194 @@ async def get_architecture():
         return {"error": "Architecture diagram not found"}
 
 def save_audio(audio):
-    if audio is None:
-        gr.Warning('No audio provided. Please record audio and try again.')
-        return None
-    
-    try:        
-        # Create a temporary file to store the audio
-        with tempfile.NamedTemporaryFile(delete=False, suffix='.wav') as temp_file:
-            temp_path = temp_file.name
-            sr, y = audio
-            
-            # Convert to mono if stereo
-            if y.ndim > 1:
-                y = y.mean(axis=1)
-            
-            # Save the audio to temporary file
-            sf.write(temp_path, y, sr)
-            
-            transcribed_text = transcribe(temp_path)
-            return temp_path, transcribed_text
-            
-    except Exception as e:
-        gr.Warning(f'Error saving audio: {str(e)}')
-        return "None", "None"
-
-def transcribe(audio_file_path):    
-    if audio_file_path is None:
-        gr.Warning('No audio provided. Please record audio and try again.')
-    else:
-        try:
-            client = OpenAI()
-
-            audio_file= open(audio_file_path, "rb")
-            transcription = client.audio.transcriptions.create(
-                model="whisper-1", 
-                file=audio_file
-            )
-
-            return transcription.text
+    with tracer.start_as_current_span("save_audio") as span:
+        if audio is None:
+            gr.Warning('No audio provided. Please record audio and try again.')
+            return None
+        
+        try:        
+            # Create a temporary file to store the audio
+            with tempfile.NamedTemporaryFile(delete=False, suffix='.wav') as temp_file:
+                temp_path = temp_file.name
+                sr, y = audio
+                
+                # Convert to mono if stereo
+                if y.ndim > 1:
+                    y = y.mean(axis=1)
+                
+                # Save the audio to temporary file
+                sf.write(temp_path, y, sr)
+                
+                transcribed_text = transcribe(temp_path)
+                return temp_path, transcribed_text
+                
         except Exception as e:
-            gr.Warning(f'Error in transcription: {str(e)}')
-            print(f'Error in transcription: {str(e)}')
-            return ""
+            span.set_attribute("error", str(e))
+            span.record_exception(e)
+            gr.Warning(f'Error saving audio: {str(e)}')
+            return "None", "None"
 
-def generate_image(text_prompt):    
-    if text_prompt is None or text_prompt.strip() == "":
-        gr.Warning('No text prompt provided. Please record audio and try again.')
-        return None, None
-    else:
-        try:
-            client = OpenAI()
-            response = client.images.generate(
-                model="dall-e-2",
-                prompt=text_prompt,
-                size="1024x1024",
-                n=1,
-            )
+def transcribe(audio_file_path):  
+    with tracer.start_as_current_span("transcribe_audio") as span:  
+        if audio_file_path is None:
+            gr.Warning('No audio provided. Please record audio and try again.')
+        else:
+            try:
+                client = OpenAI()
 
-            replicate_image_url = str(response.data[0].url)
+                audio_file= open(audio_file_path, "rb")
+                transcription = client.audio.transcriptions.create(
+                    model="whisper-1", 
+                    file=audio_file
+                )
+                span.set_attribute("transcript.text", transcription.text)
+                return transcription.text
+            except Exception as e:
+                span.set_attribute("error", str(e))
+                span.record_exception(e)
+                gr.Warning(f'Error in transcription: {str(e)}')
+                print(f'Error in transcription: {str(e)}')
+                return ""
 
-            return replicate_image_url, replicate_image_url
-
-        except Exception as e:
-            print(f"Error in image generation: {str(e)}")  # Debug print
+def generate_image(text_prompt): 
+    with tracer.start_as_current_span("generate_image") as span:
+        span.set_attribute("prompt", text_prompt)   
+        if text_prompt is None or text_prompt.strip() == "":
+            gr.Warning('No text prompt provided. Please record audio and try again.')
             return None, None
+        else:
+            try:
+                client = OpenAI()
+                response = client.images.generate(
+                    model="dall-e-2",
+                    prompt=text_prompt,
+                    size="1024x1024",
+                    n=1,
+                )
 
-def generate_image_caption(text_prompt, replicate_image_url):    
-    if text_prompt is None or text_prompt.strip() == "" or replicate_image_url is None:
-        gr.Warning('No text prompt or image URL provided. Please record audio and try again.')
-        return None, None
-    else:
-        try:
-            image_file_name = text_prompt.strip().replace(" ", "_").replace(".", "")
-            image_file_name = image_file_name + ".jpg"
+                replicate_image_url = str(response.data[0].url)
 
-            client = OpenAI()
-            response = client.chat.completions.create(
-            model="gpt-4o-mini",
-            messages=[{
-                "role": "user",
-                "content": [
-                    {"type": "text", "text": "What's in this image?"},
-                    {
-                        "type": "image_url",
-                        "image_url": {
-                                "url": replicate_image_url,
+                return replicate_image_url, replicate_image_url
+
+            except Exception as e:
+                span.set_attribute("error", str(e))
+                span.record_exception(e)
+                print(f"Error in image generation: {str(e)}")  # Debug print
+                return None, None
+
+def generate_image_caption(text_prompt, replicate_image_url):
+    with tracer.start_as_current_span("generate_image_caption") as span:
+        span.set_attribute("prompt", text_prompt)
+        span.set_attribute("replicate_image_url", replicate_image_url)
+        if text_prompt is None or text_prompt.strip() == "" or replicate_image_url is None:
+            gr.Warning('No text prompt or image URL provided. Please record audio and try again.')
+            return None, None
+        else:
+            try:
+                image_file_name = text_prompt.strip().replace(" ", "_").replace(".", "")
+                image_file_name = image_file_name + ".jpg"
+
+                client = OpenAI()
+                response = client.chat.completions.create(
+                model="gpt-4o-mini",
+                messages=[{
+                    "role": "user",
+                    "content": [
+                        {"type": "text", "text": "What's in this image?"},
+                        {
+                            "type": "image_url",
+                            "image_url": {
+                                    "url": replicate_image_url,
+                                },
                             },
-                        },
-                    ],
-                }],
-            )
-            caption = response.choices[0].message.content.strip()
-            return caption, image_file_name
-        except Exception as e:
-            print(f"Error in caption generation: {str(e)}")
-            return None, None
+                        ],
+                    }],
+                )
+                caption = response.choices[0].message.content.strip()
+                span.set_attribute("caption", caption)
+                return caption, image_file_name
+            except Exception as e:
+                span.set_attribute("error", str(e))
+                span.record_exception(e)
+                print(f"Error in caption generation: {str(e)}")
+                return None, None
 
 def store_image_in_spaces(image_url, image_file_name):
-    if image_url is None or image_file_name is None:
-        gr.Warning('No image URL or image file name provided. Please generate image and try again.')
-    else:   
-        try:
-            session = boto3.session.Session()
-            client = session.client('s3',
-                        region_name=os.getenv('SPACES_REGION'),
-                        endpoint_url=os.getenv('SPACES_ENDPOINT'),
-                        aws_access_key_id=os.getenv('SPACES_KEY'),
-                        aws_secret_access_key=os.getenv('SPACES_SECRET'))
-            
-            client.upload_file(image_url, os.getenv('SPACES_BUCKET'), image_file_name)
+    with tracer.start_as_current_span("store_image_in_spaces") as span:
+        span.set_attribute("image_url", str(image_url))
+        span.set_attribute("image_file_name", str(image_file_name))
+        if image_url is None or image_file_name is None:
+            gr.Warning('No image URL or image file name provided. Please generate image and try again.')
+        else:   
+            try:
+                session = boto3.session.Session()
+                client = session.client('s3',
+                            region_name=os.getenv('SPACES_REGION'),
+                            endpoint_url=os.getenv('SPACES_ENDPOINT'),
+                            aws_access_key_id=os.getenv('SPACES_KEY'),
+                            aws_secret_access_key=os.getenv('SPACES_SECRET'))
+                span.set_attribute("spaces.region_name", os.getenv('SPACES_REGION'))
+                span.set_attribute("spaces.endpoint_url", os.getenv('SPACES_ENDPOINT'))
+                client.upload_file(image_url, os.getenv('SPACES_BUCKET'), image_file_name)
 
-            return "Image stored successfully in Spaces"
-        except Exception as e:
-            return f"Error in storing image in spaces: {str(e)}"
+                return "Image stored successfully in Spaces"
+            except Exception as e:
+                span.set_attribute("error", str(e))
+                span.record_exception(e)
+                return f"Error in storing image in spaces: {str(e)}"
 
 def store_image_record_in_database(text_prompt, image_filename, description):
-    try:
-        # Create a new database session
-        db = SessionLocal()
-        
+    with tracer.start_as_current_span("store_image_record_in_database") as span:
+        span.set_attribute("prompt", text_prompt)
+        span.set_attribute("image_filename", image_filename)
+        span.set_attribute("description", description)
         try:
-            # Create new image record
-            db_record = ImageRecord(
-                prompt=text_prompt,
-                image_filename=image_filename,
-                description=description
-            )
+            # Create a new database session
+            db = SessionLocal()
             
-            # Add and commit the record
-            db.add(db_record)
-            db.commit()
-            db.refresh(db_record)
-            
-            return f"Image record stored successfully with ID: {db_record.id}"
+            try:
+                # Create new image record
+                db_record = ImageRecord(
+                    prompt=text_prompt,
+                    image_filename=image_filename,
+                    description=description
+                )
+                
+                # Add and commit the record
+                db.add(db_record)
+                db.commit()
+                db.refresh(db_record)
+                
+                return f"Image record stored successfully with ID: {db_record.id}"
+            except Exception as e:
+                # Rollback in case of error
+                db.rollback()
+                raise e
+            finally:
+                # Always close the session
+                db.close()
         except Exception as e:
-            # Rollback in case of error
-            db.rollback()
-            raise e
-        finally:
-            # Always close the session
-            db.close()
-    except Exception as e:
-        return f"Error in database operation: {str(e)}"
+            span.set_attribute("error", str(e))
+            span.record_exception(e)
+            return f"Error in database operation: {str(e)}"
     
 def save_details(image_url, image_file_name, text_prompt, caption):
-    if image_url is None or image_file_name is None or text_prompt is None or text_prompt.strip() == "" or caption is None or caption.strip() == "":
-        gr.Warning('Please generate image and try again.')
-        return None
-    else:
-        try:
-            store_image_in_spaces(image_url, image_file_name)
-            store_image_record_in_database(text_prompt, image_file_name, caption)
-            return "Details saved successfully"
-        except Exception as e:
-            print(f"Error in saving details: {str(e)}")
+    with tracer.start_as_current_span("save_details") as span:
+        span.set_attribute("image_url", str(image_url))
+        span.set_attribute("image_file_name", str(image_file_name))
+        span.set_attribute("prompt", str(text_prompt))
+        span.set_attribute("caption", str(caption))
+        if image_url is None or image_file_name is None or text_prompt is None or text_prompt.strip() == "" or caption is None or caption.strip() == "":
+            gr.Warning('Please generate image and try again.')
             return None
+        else:
+            try:
+                store_image_in_spaces(image_url, image_file_name)
+                store_image_record_in_database(text_prompt, image_file_name, caption)
+                return "Details saved successfully"
+            except Exception as e:
+                print(f"Error in saving details: {str(e)}")
+                return None
 with gr.Blocks(
     title="Hivenetes",
     analytics_enabled=False,
