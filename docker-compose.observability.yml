@@ -1,0 +1,105 @@
+services:
+  app:
+    build: 
+      context: .
+      dockerfile: Dockerfile.observability
+    ports:
+      - "7860:7860"  # Main application port
+      - "80:7860"    # Map port 80 to the application for health checks
+    volumes:
+      - ./images:/app/images
+    env_file:
+      - .env
+    restart: unless-stopped
+    networks:
+      - app-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:7860/"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    environment:
+      - OTEL_EXPORTER_OTLP_ENDPOINT=${OTEL_EXPORTER_OTLP_ENDPOINT}
+      - OTEL_RESOURCE_ATTRIBUTES=service.name=devoxx
+      - OTEL_METRICS_EXPORTER=otlp
+      - OTEL_TRACES_EXPORTER=otlp
+
+  otelcol:
+    networks:
+      - app-network
+    image: otel/opentelemetry-collector:0.86.0
+    command: [ "--config=/etc/otel-collector.yaml" ]
+    volumes:
+      - ./observability/otel-collector-config.yml:/etc/otel-collector.yaml
+    ports:
+      - "4317:4317"   # OTLP gRPC receiver
+      - "4318:4318"
+    depends_on:
+    - tempo
+
+# Prometheus
+  prometheus:
+    networks:
+      - app-network 
+    image: ${PROMETHEUS_IMAGE}
+    command:
+      - --web.console.templates=/etc/prometheus/consoles
+      - --web.console.libraries=/etc/prometheus/console_libraries
+      - --storage.tsdb.retention.time=1h
+      - --config.file=/etc/prometheus/prometheus-config.yaml
+      - --storage.tsdb.path=/prometheus
+      - --web.enable-lifecycle
+      - --web.route-prefix=/
+      - --enable-feature=exemplar-storage
+      - --enable-feature=otlp-write-receiver
+      - --web.enable-remote-write-receiver
+      - --enable-feature=native-histograms
+    volumes:
+      - ./observability/prometheus.yaml:/etc/prometheus/prometheus-config.yaml
+    restart: unless-stopped
+    ports:
+      - "${PROMETHEUS_SERVICE_PORT}:${PROMETHEUS_SERVICE_PORT}"
+
+  init:
+    networks:
+      - app-network
+    image: &tempoImage grafana/tempo:latest
+    user: root
+    entrypoint:
+      - "chown"
+      - "10001:10001"
+      - "/var/tempo"
+    volumes:
+      - ./tempo-data:/var/tempo
+
+  tempo:
+    networks:
+      - app-network
+    image: *tempoImage
+    command: [ "-config.file=/etc/tempo.yaml" ]
+    volumes:
+      - ./observability/tempo.yaml:/etc/tempo.yaml
+      - ./tempo-data:/var/tempo
+    ports:
+      - "3200:3200" # tempo
+      - "5555:4317" # otlp grpc
+    depends_on:
+      - init
+
+  grafana:
+    networks:
+      - app-network 
+    image: grafana/grafana:11.0.0
+    volumes:
+      - ./observability/grafana-datasources.yaml:/etc/grafana/provisioning/datasources/datasources.yaml
+    environment:
+      - GF_AUTH_ANONYMOUS_ENABLED=true
+      - GF_AUTH_ANONYMOUS_ORG_ROLE=Admin
+      - GF_AUTH_DISABLE_LOGIN_FORM=true
+      - GF_FEATURE_TOGGLES_ENABLE=traceqlEditor
+    ports:
+      - "3000:3000"
+
+networks:
+  app-network:
+    driver: bridge 

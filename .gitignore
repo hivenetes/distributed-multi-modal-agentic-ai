@@ -58,3 +58,4 @@ venv
 .venv
 audio_files/
 images/
+tempo-data/
