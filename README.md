@@ -45,7 +45,6 @@ distributed-multi-modal-agentic-ai/
 - Docker and Docker Compose
 - Terraform 1.0+
 - DigitalOcean account with API token
-- Replicate API key
 - OpenAI API key
 - SSH key for server access
 
@@ -75,7 +74,6 @@ cp .env.example .env
 4. Edit the `.env` file with your credentials:
 
 ```
-REPLICATE_API_TOKEN=your_replicate_api_token
 OPENAI_API_KEY=your_openai_api_key
 
 # DigitalOcean Spaces Configuration
@@ -94,6 +92,10 @@ DB_PASSWORD=your_db_password
 
 # DigitalOcean Registry Access
 DO_API_TOKEN=your_digitalocean_api_token
+
+# Server details 
+SERVER_IP=0.0.0.0
+PORT=7860
 ```
 
 5. Run the application locally:
