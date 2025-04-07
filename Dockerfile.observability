@@ -35,4 +35,4 @@ COPY . .
 EXPOSE 7860 80
 
 # Command to run the application
-CMD ["opentelemetry-instrument","python","app-observability.py"]
+CMD ["opentelemetry-instrument","python","app.py"]

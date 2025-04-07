@@ -59,3 +59,4 @@ venv
 audio_files/
 images/
 tempo-data/
+observability/config.alloy

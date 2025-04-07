@@ -62,7 +62,7 @@ deploy_to_server() {
     fi
     
     # Run docker compose up with the production configuration
-    ssh -i "$SSH_KEY" "root@$ip" "cd /root/app && docker compose up -d"
+    ssh -i "$SSH_KEY" "root@$ip" "cd /root/app && docker compose up -f docker-compose.observability-cloud.yml -d"
     if [ $? -ne 0 ]; then
         echo "Failed to run docker compose on $server_name"
         return 1
