@@ -2,7 +2,7 @@ name: Build and Push to DigitalOcean Container Registry
 
 on:
   push:
-    branches: [ main, master ]
+    branches: [ main, master, feat/observability ]
   workflow_dispatch:
 
 env:
@@ -36,5 +36,5 @@ jobs:
           provenance: false
           tags: |
             ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ github.sha }}
-            ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest
+            ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:observability
             
