@@ -48,7 +48,7 @@ deploy_to_server() {
         return 1
     fi
     
-    scp -i "$SSH_KEY" ../docker-compose.production.yml "root@$ip:/root/app/docker-compose.yml"
+    scp -i "$SSH_KEY" ../docker-compose.observability-cloud.yml "root@$ip:/root/app/docker-compose.yml"
     if [ $? -ne 0 ]; then
         echo "Failed to copy docker-compose file to $server_name"
         return 1
@@ -62,7 +62,7 @@ deploy_to_server() {
     fi
     
     # Run docker compose up with the production configuration
-    ssh -i "$SSH_KEY" "root@$ip" "cd /root/app && docker compose up -f docker-compose.observability-cloud.yml -d"
+    ssh -i "$SSH_KEY" "root@$ip" "cd /root/app && docker compose up -d"
     if [ $? -ne 0 ]; then
         echo "Failed to run docker compose on $server_name"
         return 1

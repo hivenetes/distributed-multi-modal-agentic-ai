@@ -26,29 +26,29 @@ services:
       - OTEL_TRACES_EXPORTER=otlp
       - OTEL_RESOURCE_ATTRIBUTES=service.name=meridian
 
-  # otelcol:
-  #   networks:
-  #     - app-network
-  #   image: otel/opentelemetry-collector:0.86.0
-  #   command: [ "--config=/etc/otel-collector.yaml" ]
-  #   volumes:
-  #     - ./observability/otel-collector-cloud-config.yml:/etc/otel-collector.yaml
-  #   ports:
-  #     - "4317:4317"   # OTLP gRPC receiver
-  #     - "4318:4318"
-
-  alloy:
-    image: grafana/alloy:v1.3.1
+  otelcol:
+    networks:
+      - app-network
+    image: otel/opentelemetry-collector:0.86.0
+    command: [ "--config=/etc/otel-collector.yaml" ]
     volumes:
-      - ./observability/config.alloy:/etc/alloy/config.alloy
-    command:
-      - run
-      - /etc/alloy/config.alloy
-      - --storage.path=/var/lib/alloy/data
-      - --server.http.listen-addr=0.0.0.0:12345
+      - ./observability/otel-collector-cloud-config.yml:/etc/otel-collector.yaml
     ports:
-      - "12345:12345"
-      - "4319:4319"
+      - "4317:4317"   # OTLP gRPC receiver
+      - "4318:4318"
+
+  # alloy:
+  #   image: grafana/alloy:v1.3.1
+  #   volumes:
+  #     - ./observability/config.alloy:/etc/alloy/config.alloy
+  #   command:
+  #     - run
+  #     - /etc/alloy/config.alloy
+  #     - --storage.path=/var/lib/alloy/data
+  #     - --server.http.listen-addr=0.0.0.0:12345
+  #   ports:
+  #     - "12345:12345"
+  #     - "4319:4319"
 
 # Prometheus
   prometheus:
