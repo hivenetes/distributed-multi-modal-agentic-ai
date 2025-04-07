@@ -1,8 +1,6 @@
 services:
   app:
-    build: 
-      context: .
-      dockerfile: Dockerfile.observability
+    image: registry.digitalocean.com/hivenetes-registry/multi-modal-agents:observability
     ports:
       - "7860:7860"  # Main application port
       - "80:7860"    # Map port 80 to the application for health checks
@@ -54,7 +52,7 @@ services:
   prometheus:
     networks:
       - app-network 
-    image: ${PROMETHEUS_IMAGE}
+    image: quay.io/prometheus/prometheus:v2.52.0
     command:
       - --web.console.templates=/etc/prometheus/consoles
       - --web.console.libraries=/etc/prometheus/console_libraries
@@ -71,7 +69,7 @@ services:
       - ./observability/prometheus.yaml:/etc/prometheus/prometheus-config.yaml
     restart: unless-stopped
     ports:
-      - "${PROMETHEUS_SERVICE_PORT}:${PROMETHEUS_SERVICE_PORT}"
+      - "9090:9090"
 
   # init:
   #   networks:
