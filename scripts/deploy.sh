@@ -42,11 +42,19 @@ deploy_to_server() {
     fi
     
     # Copy .env and docker-compose.production.yml files
-    scp -i "$SSH_KEY" ../.env "root@$ip:/root/app/.env"
+    # Create temporary .env file with OTEL_RESOURCE_ATTRIBUTES
+    cp ../.env /tmp/.env-$server_name.tmp
+    echo "" >> /tmp/.env-$server_name.tmp
+    echo "HOSTNAME=$server_name" >> /tmp/.env-$server_name.tmp
+    echo "OTEL_RESOURCE_ATTRIBUTES=service.instance.id=$server_name" >> /tmp/.env-$server_name.tmp
+    # Copy the temporary .env file
+    scp -i "$SSH_KEY" /tmp/.env-$server_name.tmp "root@$ip:/root/app/.env"
     if [ $? -ne 0 ]; then
         echo "Failed to copy .env file to $server_name"
+        rm /tmp/.env-$server_name.tmp
         return 1
     fi
+    rm /tmp/.env-$server_name.tmp
     
     scp -i "$SSH_KEY" ../docker-compose.observability-cloud.yml "root@$ip:/root/app/docker-compose.yml"
     if [ $? -ne 0 ]; then

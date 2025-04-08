@@ -22,7 +22,8 @@ services:
       - OTEL_EXPORTER_OTLP_HEADERS=${OTEL_EXPORTER_OTLP_HEADERS}
       - OTEL_METRICS_EXPORTER=otlp
       - OTEL_TRACES_EXPORTER=otlp
-      - OTEL_RESOURCE_ATTRIBUTES=service.name=meridian
+      - OTEL_SERVICE_NAME=meridian
+      - OTEL_RESOURCE_ATTRIBUTES_ADD=${OTEL_RESOURCE_ATTRIBUTES}
 
   otelcol:
     networks:
