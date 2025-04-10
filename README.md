@@ -2,6 +2,8 @@
 
 This application converts spoken descriptions into AI-generated images with automatic captions. It uses state-of-the-art AI models for speech recognition, image generation, and image captioning, while storing the results in both a PostgreSQL database and DigitalOcean Spaces.
 
+![Architecture Diagram](assets/architecture.png)
+
 ## Features
 
 - 🎤 **Speech-to-Text**: Uses OpenAI's Whisper model for accurate speech recognition
@@ -16,7 +18,7 @@ This application converts spoken descriptions into AI-generated images with auto
 
 ## Project Structure
 
-```
+```bash
 distributed-multi-modal-agentic-ai/
 ├── app.py                       # Main application file
 ├── db_config.py                 # Database configuration and models
@@ -74,7 +76,7 @@ cp .env.example .env
 
 4. Edit the `.env` file with your credentials:
 
-```
+```bash
 REPLICATE_API_TOKEN=your_replicate_api_token
 OPENAI_API_KEY=your_openai_api_key
 
@@ -120,7 +122,7 @@ cp project.tfvars.example project.tfvars
 
 3. Edit `project.tfvars` to configure your DigitalOcean setup:
 
-```
+```bash
 do_token = "your_digitalocean_api_token"
 ssh_fingerprint = "your_ssh_key_fingerprint"
 droplet_size = "s-2vcpu-4gb"
@@ -190,6 +192,7 @@ chmod +x deploy.sh
 ```
 
 The deployment script will:
+
 - Fetch server IPs from Terraform output
 - Connect to each server via SSH
 - Clean up existing Docker resources
